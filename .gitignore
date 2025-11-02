@@ -1,0 +1,11 @@
+build/
+*.py
+*.ipynb
+*.3idx
+*.tif
+*.Identifier
+data_image/
+java/
+*.md
+*.tif
+*.btr
