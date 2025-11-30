@@ -141,14 +141,14 @@ FixedHeightComparator::ExperimentResult FixedHeightComparator::RunExperiment(
     using namespace std::chrono;
     auto experiment_start = high_resolution_clock::now();
 
-    std::cout << "\n========== Fixed-Height Plane Experiment (OpenMP Parallel) ==========" << std::endl;
+    std::cout << "\n========== Fixed-Height Plane Experiment (OpenMP Parallel - Optimized) ==========" << std::endl;
     std::cout << "Fixed height: " << fixed_height << " m" << std::endl;
     std::cout << "Grid resolution: " << grid_resolution_m << " m" << std::endl;
-    // 获取OpenMP线程数
+
+    // 获取可用线程数，让用户可以通过环境变量 OMP_NUM_THREADS 控制
     int num_threads = omp_get_max_threads();
-    std::cout << "OpenMP threads: " << num_threads << "======================" <<std::endl;
-    int thread = 4;
-    omp_set_num_threads(thread);  // 设置为你想要的线程数，例如8
+    std::cout << "OpenMP threads available: " << num_threads << std::endl;
+
     ExperimentResult result;
     result.fixed_height = fixed_height;
     result.grid_resolution = grid_resolution_m;
@@ -178,110 +178,149 @@ FixedHeightComparator::ExperimentResult FixedHeightComparator::RunExperiment(
     const int min_x = 835000;
     const int min_y = 815500;
 
-    // 主线程计算雷达局部坐标（只需计算一次）
+    // ========== 阶段1: 预计算所有坐标转换 ==========
+    auto precompute_start = high_resolution_clock::now();
+
+    // 主线程计算雷达局部坐标
     PJ_CONTEXT *main_proj_context = proj_context_create();
     PJ *main_proj = proj_create_crs_to_crs(main_proj_context, "EPSG:4326", "EPSG:2326", NULL);
     PJ_COORD radar_coord = proj_coord(radar_pos.y, radar_pos.x, 0, 0);
     PJ_COORD radar_result = proj_trans(main_proj, PJ_FWD, radar_coord);
     double radar_local_x = radar_result.xy.y - min_x;
     double radar_local_y = radar_result.xy.x - min_y;
+
+    // 预计算网格点的经纬度坐标
+    std::vector<double> lon_coords(steps_lon);
+    std::vector<double> lat_coords(steps_lat);
+    for (int j = 0; j < steps_lon; ++j) {
+        lon_coords[j] = lon_range[0] + j * lon_step;
+    }
+    for (int i = 0; i < steps_lat; ++i) {
+        lat_coords[i] = lat_range[0] + i * lat_step;
+    }
+
+    // 预计算所有网格点的局部坐标（关键优化：将PROJ转换移出主循环）
+    std::vector<double> target_local_x_arr(total_points);
+    std::vector<double> target_local_y_arr(total_points);
+
+    #pragma omp parallel
+    {
+        PJ_CONTEXT *thread_proj_context = proj_context_create();
+        PJ *thread_proj = proj_create_crs_to_crs(thread_proj_context, "EPSG:4326", "EPSG:2326", NULL);
+
+        #pragma omp for schedule(static)
+        for (size_t idx = 0; idx < total_points; ++idx) {
+            int i = idx / steps_lon;
+            int j = idx % steps_lon;
+
+            double lon = lon_coords[j];
+            double lat = lat_coords[i];
+
+            // 保存位置信息到结果数组
+            result.grid_points[idx].position.x = lon;
+            result.grid_points[idx].position.y = lat;
+            result.grid_points[idx].position.z = fixed_height;
+
+            // 坐标转换并缓存结果
+            PJ_COORD target_coord = proj_coord(lat, lon, 0, 0);
+            PJ_COORD target_result = proj_trans(thread_proj, PJ_FWD, target_coord);
+            target_local_x_arr[idx] = target_result.xy.y - min_x;
+            target_local_y_arr[idx] = target_result.xy.x - min_y;
+        }
+
+        proj_destroy(thread_proj);
+        proj_context_destroy(thread_proj_context);
+    }
+
     proj_destroy(main_proj);
     proj_context_destroy(main_proj_context);
 
+    auto precompute_end = high_resolution_clock::now();
+    double precompute_time = duration_cast<duration<double>>(precompute_end - precompute_start).count();
+    std::cout << "Coordinate precomputation time: " << precompute_time << " seconds" << std::endl;
+
+    // 缓存雷达参数
+    const double radar_cached_alt = radar->_cached_abs_alt_m;
+
+    // ========== 阶段2: 预加载 RTree 池（每个线程一个副本）==========
+    auto rtree_load_start = high_resolution_clock::now();
+
+    std::vector<RTree3d*> rtree_pool(num_threads);
+    const char* rtree_file = "../../test_area.3idx";
+
+    std::cout << "Loading " << num_threads << " RTree copies for parallel processing..." << std::endl;
+
+    // 并行加载 RTree 副本
+    #pragma omp parallel for
+    for (int t = 0; t < num_threads; ++t) {
+        rtree_pool[t] = new RTree3d();
+        rtree_pool[t]->Load(rtree_file);
+    }
+
+    auto rtree_load_end = high_resolution_clock::now();
+    double rtree_load_time = duration_cast<duration<double>>(rtree_load_end - rtree_load_start).count();
+    std::cout << "RTree pool loading time: " << rtree_load_time << " seconds" << std::endl;
+
     std::cout << "Running parallel computation (visibility + power density)..." << std::endl;
 
-    // 统计变量（使用reduction）
+    // 统计变量
     size_t local_visible_mesh = 0;
     size_t local_visible_dem = 0;
     size_t local_disagreement = 0;
-
-    // min/max需要用critical section保护
     float global_min_density = 1e12f;
     float global_max_density = 0.0f;
 
-    omp_set_num_threads(thread);  // 设置为你想要的线程数，例如8
-    auto parallel_start = high_resolution_clock::now();  // 现在才开始计时
+    // ========== 阶段3: 主计算循环（每个线程使用私有RTree）==========
+    auto parallel_start = high_resolution_clock::now();
 
-    // OpenMP并行循环：每个线程同时完成可见性判断和能量计算
-    #pragma omp parallel reduction(+:local_visible_mesh, local_visible_dem, local_disagreement)
+    #pragma omp parallel reduction(+:local_visible_mesh, local_visible_dem, local_disagreement) \
+                         reduction(min:global_min_density) reduction(max:global_max_density)
     {
-    
+        // 获取当前线程ID，使用对应的RTree副本
+        int tid = omp_get_thread_num();
+        RTree3d* my_rtree = rtree_pool[tid];
 
-        // 每个线程创建自己的其他资源（避免竞争）
-        PJ_CONTEXT *thread_proj_context = proj_context_create();
-        PJ *thread_proj = proj_create_crs_to_crs(thread_proj_context, "EPSG:4326", "EPSG:2326", NULL);
+        // 线程私有的计算工具
         caltools ct;
-        DEMVisibility thread_dem_visibility(dem);
 
-        // 线程局部的min/max
-        float thread_min = 1e12f;
-        float thread_max = 0.0f;
-
-        #pragma omp for schedule(dynamic, 100)
+        // 使用guided调度平衡负载
+        #pragma omp for schedule(guided, 64)
         for (size_t idx = 0; idx < total_points; ++idx) {
-            int i = idx / steps_lon;  // 行索引
-            int j = idx % steps_lon;  // 列索引
-
             GridPoint& point = result.grid_points[idx];
 
-            // 计算点的位置（EPSG:4326）
-            point.position.x = lon_range[0] + j * lon_step;
-            point.position.y = lat_range[0] + i * lat_step;
-            point.position.z = fixed_height;
+            // 使用预计算的局部坐标
+            double target_local_x = target_local_x_arr[idx];
+            double target_local_y = target_local_y_arr[idx];
 
-            // 转换目标点到EPSG:2326局部坐标
-            PJ_COORD target_coord = proj_coord(point.position.y, point.position.x, 0, 0);
-            PJ_COORD target_result = proj_trans(thread_proj, PJ_FWD, target_coord);
-            double target_local_x = target_result.xy.y - min_x;
-            double target_local_y = target_result.xy.x - min_y;
-
-            // 1. 三角面片可见性判断（使用线程局部RTree，无需同步）
+            // 1. 三角面片可见性判断（使用线程私有的RTree）
             Rect3d search_rect(
                 target_local_x + indexRange_x,
                 indexRange_y + target_local_y,
                 fixed_height,
                 indexRange_x + radar_local_x,
                 indexRange_y + radar_local_y,
-                radar->_cached_abs_alt_m
+                radar_cached_alt
             );
 
-            bool occluded_mesh = rtree->Intersect3d(search_rect.min, search_rect.max, IntersectCallback);
+            bool occluded_mesh = my_rtree->Intersect3d(search_rect.min, search_rect.max, IntersectCallback);
             point.visible_mesh = !occluded_mesh;
 
-            // // 2. DEM可见性判断
-            // bool occluded_dem = thread_dem_visibility.IsOccluded(radar_pos, point.position);
-            // point.visible_dem = !occluded_dem;
-
-            // 3. 能量密度计算（只对mesh可见的点计算）
+            // 2. 能量密度计算（只对mesh可见的点计算）
             if (point.visible_mesh) {
                 point.power_density = radar->CalculateSinglePointPowerDensity(point.position, &ct);
-
-                // if (point.power_density > 0) {
-                //     if (point.power_density < thread_min) thread_min = point.power_density;
-                //     if (point.power_density > thread_max) thread_max = point.power_density;
-                // }
+                local_visible_mesh++;
             } else {
                 point.power_density = 0.0f;
             }
-
-            // // 统计
-            // if (point.visible_mesh) local_visible_mesh++;
-            // if (point.visible_dem) local_visible_dem++;
-            // if (point.visible_mesh != point.visible_dem) local_disagreement++;
         }
-        // 清理线程局部资源
-        proj_destroy(thread_proj);
-        proj_context_destroy(thread_proj_context);
-        // 注意：thread_rtree不在这里删除，而是在parallel区域结束后统一清理
-
-        // // 更新全局min/max（线程安全）
-        // #pragma omp critical
-        // {
-        //     if (thread_min < global_min_density) global_min_density = thread_min;
-        //     if (thread_max > global_max_density) global_max_density = thread_max;
-        // }
     }
     auto parallel_end = high_resolution_clock::now();
+
+    // 清理 RTree 池
+    for (int t = 0; t < num_threads; ++t) {
+        delete rtree_pool[t];
+    }
+    rtree_pool.clear();
     // 保存统计结果
     result.visible_mesh_count = local_visible_mesh;
     result.visible_dem_count = local_visible_dem;
@@ -297,21 +336,21 @@ FixedHeightComparator::ExperimentResult FixedHeightComparator::RunExperiment(
 
     auto experiment_end = high_resolution_clock::now();
 
-    // 计算时间（这里把所有阶段合并为一个）
-    // result.total_time = duration_cast<duration<double>>(experiment_end - experiment_start).count();
+    // 计算时间
     double parallel_time = duration_cast<duration<double>>(parallel_end - parallel_start).count();
-    cout << "实验所用时长为" << parallel_time << "====================";
-    // // 为了兼容性，将时间分配到各个阶段（实际是同时进行的）
-    // result.mesh_visibility_time = parallel_time / 3.0;
-    // result.dem_visibility_time = parallel_time / 3.0;
-    // result.power_calculation_time = parallel_time / 3.0;
+    double total_time = duration_cast<duration<double>>(experiment_end - experiment_start).count();
+    result.total_time = total_time;
 
-    // std::cout << "\n=== Experiment Completed ===" << std::endl;
-    // std::cout << "Parallel computation time: " << parallel_time << " seconds" << std::endl;
-    // std::cout << "Total time: " << result.total_time << " seconds" << std::endl;
-    // std::cout << "Visible (Mesh): " << result.visible_mesh_count << " points" << std::endl;
-    // std::cout << "Visible (DEM): " << result.visible_dem_count << " points" << std::endl;
-    // std::cout << "Disagreements: " << result.disagreement_count << " points" << std::endl;
+    // 输出计时信息
+    std::cout << "\n=== Timing Results ===" << std::endl;
+    std::cout << "Parallel computation time: " << parallel_time << " seconds" << std::endl;
+    std::cout << "Total experiment time: " << total_time << " seconds" << std::endl;
+    std::cout << "Points per second: " << static_cast<double>(total_points) / parallel_time << std::endl;
+    std::cout << "Threads used: " << num_threads << std::endl;
+
+    // 估算理想加速比（假设完美并行）
+    double estimated_serial_time = parallel_time * num_threads;
+    std::cout << "Estimated speedup: " << estimated_serial_time / parallel_time << "x (ideal: " << num_threads << "x)" << std::endl;
 
     return result;
 }

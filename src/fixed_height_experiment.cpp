@@ -19,12 +19,12 @@ struct DEMConfig {
 };
 
 const DEMConfig DEM_CONFIGS[] = {
-    // {0.000005, 0.5,  "High-precision DEM - LiDAR simulation"},
-    {0.00001,  1.0,  "Medium-precision DEM - UAV photogrammetry"},
-    // {0.00005,  5.0,  "Low-precision DEM - SRTM/ASTER GDEM"},
-    // {0.0001,   10.0, "Coarse DEM - Digitized topographic map"},
-    // {0.00015,  15.0, "15m Coarse DEM - Digitized topographic map"},
-    // {0.0002,  20.0, "20m Coarse DEM - Digitized topographic map"},
+    //  {0.000005, 0.5,  "High-precision DEM - LiDAR simulation"},
+     {0.00001,  1.0,  "Medium-precision DEM - UAV photogrammetry"},
+     {0.00005,  5.0,  "Low-precision DEM - SRTM/ASTER GDEM"},
+     {0.0001,   10.0, "Coarse DEM - Digitized topographic map"},
+     {0.00015,  15.0, "15m Coarse DEM - Digitized topographic map"},
+     {0.0002,  20.0, "20m Coarse DEM - Digitized topographic map"},
 };
 
 int main(int argc, char** argv) {
@@ -123,6 +123,7 @@ int main(int argc, char** argv) {
             }
         }
     }
+    // dem_files.push_back("dtm_5m.tif");
     std::cout << "✓ DEM files ready (" << dem_files.size() << " files)\n" << std::endl;
 
     // ========== 第5步：设置实验参数 ==========

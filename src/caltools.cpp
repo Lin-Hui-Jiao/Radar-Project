@@ -242,18 +242,22 @@ void caltools::trans_axes(float *xyz,float theta,float phi)
 	float x=xyz[0];
 	float y=xyz[1];
 	float z=xyz[2];
+
+	// 将度转换为弧度
+	float theta_rad = theta * PI / 180.0;
+	float phi_rad = phi * PI / 180.0;
 	//绕z轴转动导致的坐标改变
-	xyz[0]=x*cos(theta)-y*sin(theta);
-	xyz[1]=x*sin(theta)+y*cos(theta);
+	xyz[0]=x*cos(theta_rad)-y*sin(theta_rad);
+	xyz[1]=x*sin(theta_rad)+y*cos(theta_rad);
 	xyz[2]=xyz[2];
 
 	x=xyz[0];
 	y=xyz[1];
 	z=xyz[2];
 	//绕y轴转动导致的坐标改变
-	xyz[0]=z*sin(phi)+x*cos(phi);
+	xyz[0]=z*sin(phi_rad)+x*cos(phi_rad);
 	xyz[1]=xyz[1];
-	xyz[2]=z*cos(phi)-x*sin(phi);
+	xyz[2]=z*cos(phi_rad)-x*sin(phi_rad);
 }
 /**
  * 第三步：将旋转后的XYZ坐标，转换为雷达物理公式真正需要的球坐标格式，
@@ -346,16 +350,18 @@ float caltools::choose_rDB(float f,float phi)
 
 float caltools::cal_alpha(float reduce_db)
 {
-	float alpha;
-	alpha = reduce_db / 2 / 350 / 1.852;
-	return alpha;
+	// float alpha;
+	// alpha = reduce_db / 2 / 350 / 1.852;
+	// return alpha;
+	return reduce_db;
 }
-
+//这是什么玩意
 float caltools::cal_La(float alpha,float remote)
 {
 	float La_DB;
 	float La;
-	La_DB = 2 * alpha * remote;
+	// La_DB = 2 * alpha * remote;
+	La_DB = alpha * remote / 1000.0;
 	La = pow(10, (La_DB/10));
 	return La;
 }
@@ -363,13 +369,16 @@ float caltools::cal_La(float alpha,float remote)
 float caltools::cal_Gthetaphi(float G,float etheta, float ephi)
 {
 	float Gthetaphi;
-	Gthetaphi = G * abs(etheta) * abs(ephi);
+	float G_linear = pow(10, G/10.0);  // 将dB转换为线性值
+	Gthetaphi = G_linear * abs(etheta) * abs(ephi);
 	return Gthetaphi;
 }
 
 float caltools::cal_Qt(float _Pt,float remote,float La, float Gthetaphi)
 {
 	float Qt;
-	Qt = (_Pt * Gthetaphi) / (4 * PI * remote * remote * La);
+	float Pt_watts = _Pt * 1000.0;  // kW → W
+    // float remote_m = remote * 1000.0;  // km → m
+	Qt = (Pt_watts * Gthetaphi) / (4 * PI * remote * remote * La);
 	return Qt;
 }

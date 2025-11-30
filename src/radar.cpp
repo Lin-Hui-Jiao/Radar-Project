@@ -208,12 +208,12 @@ void Radar::CapablePowerDensity(float out[], const Position *pos_list, size_t n,
             // b. 坐标转换和能量计算 (这部分逻辑完全不变)
             float xyz[3]{};
             float thephiR[3]{};
-            ct.lon2xyz(_pos.lon, _pos.lat, _pos.alt, target_pos.lon, target_pos.lat, target_pos.alt, xyz);
+            ct.lon2xyz(_pos.lon, _pos.lat, _cached_abs_alt_m, target_pos.lon, target_pos.lat, target_pos.alt, xyz);
             ct.trans_axes(xyz, _base_theta, _base_phi);
             ct.xyz2tpr(xyz, thephiR);
             float minradxtheta = 0;
             float minradxphi = 0;
-            float radxR = thephiR[2] / 1000.0f; 
+            float radxR = thephiR[2]; 
 
             if (radius != NULL) {
                 radius[i] = radxR;
@@ -339,12 +339,12 @@ void Radar::CapableGroundPowerDensity(int range,double step){
                 // b. 坐标转换和能量计算 (这部分逻辑完全不变)
                 float xyz[3]{};
                 float thephiR[3]{};
-                ct.lon2xyz(_pos.lon, _pos.lat, _pos.alt, pos_list[index].lon, pos_list[index].lat, pos_list[index].alt, xyz);
+                ct.lon2xyz(_pos.lon, _pos.lat, _cached_abs_alt_m, pos_list[index].lon, pos_list[index].lat, pos_list[index].alt, xyz);
                 ct.trans_axes(xyz, _base_theta, _base_phi);
                 ct.xyz2tpr(xyz, thephiR);
                 float minradxtheta = 0;
                 float minradxphi = 0;
-                float radxR = thephiR[2] / 1000.0f; 
+                float radxR = thephiR[2]; 
                 //先计算每点与载具角度的差值，再看其是否在旋转范围内
                 float radxtheta = thephiR[0];
                 float radxphi = thephiR[1];
@@ -535,13 +535,13 @@ void Radar::CapableFixedHeightPowerDensity(int range, double step, double fixed_
                 // e. 坐标转换和能量计算（与原函数相同）
                 float xyz[3]{};
                 float thephiR[3]{};
-                ct.lon2xyz(_pos.lon, _pos.lat, _pos.alt, pos_list[index].lon, pos_list[index].lat, pos_list[index].alt, xyz);
+                ct.lon2xyz(_pos.lon, _pos.lat, _cached_abs_alt_m, pos_list[index].lon, pos_list[index].lat, pos_list[index].alt, xyz);
                 ct.trans_axes(xyz, _base_theta, _base_phi);
                 ct.xyz2tpr(xyz, thephiR);
 
                 float minradxtheta = 0;
                 float minradxphi = 0;
-                float radxR = thephiR[2] / 1000.0f;
+                float radxR = thephiR[2];
 
                 // 计算与雷达扫描范围的关系
                 float radxtheta = thephiR[0];
@@ -674,6 +674,9 @@ void Radar::CapableFixedHeightPowerDensity(int range, double step, double fixed_
 // 【新增函数】批量计算多个点的功率密度（Vec3d版本）
 // 使用OpenMP并行，每个线程独立创建PROJ_Manager和caltools，避免重复创建开销
 float Radar::CalculateSinglePointPowerDensity(const Vec3d& target_pos_decimal, caltools* ct) {
+    // 调试：打印前5个点的中间值
+    static int debug_count = 0;
+
     // 将Vec3d转换为Position结构
     Position target_pos;
     DecimalToDMS(target_pos.lon, target_pos_decimal.x);
@@ -692,7 +695,8 @@ float Radar::CalculateSinglePointPowerDensity(const Vec3d& target_pos_decimal, c
 
     float minradxtheta = 0;
     float minradxphi = 0;
-    float radxR = thephiR[2] / 1000.0f;
+    // float radxR = thephiR[2] / 1000.0f;
+    float radxR = thephiR[2];
 
     float radxtheta = thephiR[0];
     float radxphi = thephiR[1];
@@ -726,6 +730,33 @@ float Radar::CalculateSinglePointPowerDensity(const Vec3d& target_pos_decimal, c
         tpr[0] = minradxtheta;
         tpr[1] = minradxphi;
         tpr[2] = radxR;
+    }
+
+    // 调试输出：专门打印在扫描范围内的点（minradxtheta = 0）
+    static int in_range_count = 0;
+    if (in_range_count < 5 && minradxtheta == 0 && tpr[2] > 0) {
+        // 计算 etheta 和 ephi 用于调试
+        float etheta = _etheta_table[int(tpr[0] * PRECISION)];
+        float ephi = _ephi_table[int(tpr[1] * PRECISION)];
+
+        std::cout << "\n=== IN-RANGE Point " << in_range_count << " ===" << std::endl;
+        std::cout << "Target: (" << target_pos_decimal.x << ", " << target_pos_decimal.y << ", " << target_pos_decimal.z << ")" << std::endl;
+        std::cout << "theta=" << thephiR[0] << "° (IN RANGE [-60,60]), phi=" << thephiR[1] << "°" << std::endl;
+        std::cout << "Distance R=" << thephiR[2] << "m" << std::endl;
+        std::cout << "minradxtheta=" << minradxtheta << ", minradxphi=" << minradxphi << std::endl;
+        std::cout << "etheta=" << etheta << ", ephi=" << ephi << std::endl;
+        std::cout << "etheta_table[0]=" << _etheta_table[0] << std::endl;
+        in_range_count++;
+    }
+
+    // 也打印前3个不在范围内的点作为对比
+    if (debug_count < 3 && minradxtheta > 0 && tpr[2] > 0) {
+        float etheta = _etheta_table[int(tpr[0] * PRECISION)];
+        std::cout << "\n=== OUT-OF-RANGE Point " << debug_count << " ===" << std::endl;
+        std::cout << "theta=" << thephiR[0] << "° (OUT OF RANGE)" << std::endl;
+        std::cout << "minradxtheta=" << minradxtheta << ", etheta=" << etheta << std::endl;
+        std::cout << "Distance R=" << thephiR[2] << "m" << std::endl;
+        debug_count++;
     }
 
     return PointPowerDensity(tpr);
