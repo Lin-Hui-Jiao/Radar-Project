@@ -251,17 +251,26 @@ FixedHeightComparator::ExperimentResult FixedHeightComparator::RunExperiment(
     std::cout << "Loading " << num_threads << " RTree copies for parallel processing..." << std::endl;
 
     // 并行加载 RTree 副本
-    #pragma omp parallel for
-    for (int t = 0; t < num_threads; ++t) {
-        rtree_pool[t] = new RTree3d();
-        rtree_pool[t]->Load(rtree_file);
-    }
+    // #pragma omp parallel for
+    // for (int t = 0; t < num_threads; ++t) {
+    //     rtree_pool[t] = new RTree3d();
+    //     rtree_pool[t]->Load(rtree_file);
+    // }
 
     auto rtree_load_end = high_resolution_clock::now();
     double rtree_load_time = duration_cast<duration<double>>(rtree_load_end - rtree_load_start).count();
     std::cout << "RTree pool loading time: " << rtree_load_time << " seconds" << std::endl;
 
     std::cout << "Running parallel computation (visibility + power density)..." << std::endl;
+
+    // 创建DEM可见性分析器
+    DEMVisibility dem_visibility(dem);
+
+    // 雷达位置（用于DEM可见性判断）
+    Vec3d radar_pos_for_dem;
+    radar_pos_for_dem.x = radar_pos.x;  // 经度
+    radar_pos_for_dem.y = radar_pos.y;  // 纬度
+    radar_pos_for_dem.z = radar_cached_alt;  // 绝对高程
 
     // 统计变量
     size_t local_visible_mesh = 0;
@@ -278,7 +287,7 @@ FixedHeightComparator::ExperimentResult FixedHeightComparator::RunExperiment(
     {
         // 获取当前线程ID，使用对应的RTree副本
         int tid = omp_get_thread_num();
-        RTree3d* my_rtree = rtree_pool[tid];
+        //RTree3d* my_rtree = rtree_pool[tid];
 
         // 线程私有的计算工具
         caltools ct;
@@ -288,25 +297,37 @@ FixedHeightComparator::ExperimentResult FixedHeightComparator::RunExperiment(
         for (size_t idx = 0; idx < total_points; ++idx) {
             GridPoint& point = result.grid_points[idx];
 
-            // 使用预计算的局部坐标
-            double target_local_x = target_local_x_arr[idx];
-            double target_local_y = target_local_y_arr[idx];
+            // // 使用预计算的局部坐标
+            // double target_local_x = target_local_x_arr[idx];
+            // double target_local_y = target_local_y_arr[idx];
 
-            // 1. 三角面片可见性判断（使用线程私有的RTree）
-            Rect3d search_rect(
-                target_local_x + indexRange_x,
-                indexRange_y + target_local_y,
-                fixed_height,
-                indexRange_x + radar_local_x,
-                indexRange_y + radar_local_y,
-                radar_cached_alt
-            );
+            // // 1. 三角面片可见性判断（使用线程私有的RTree）
+            // Rect3d search_rect(
+            //     target_local_x + indexRange_x,
+            //     indexRange_y + target_local_y,
+            //     fixed_height,
+            //     indexRange_x + radar_local_x,
+            //     indexRange_y + radar_local_y,
+            //     radar_cached_alt
+            // );
 
-            bool occluded_mesh = my_rtree->Intersect3d(search_rect.min, search_rect.max, IntersectCallback);
-            point.visible_mesh = !occluded_mesh;
+            // bool occluded_mesh = my_rtree->Intersect3d(search_rect.min, search_rect.max, IntersectCallback);
+            // point.visible_mesh = !occluded_mesh;
 
-            // 2. 能量密度计算（只对mesh可见的点计算）
-            if (point.visible_mesh) {
+            // 2. DEM可见性判断
+            bool occluded_dem = dem_visibility.IsOccluded(radar_pos_for_dem, point.position);
+            point.visible_dem = !occluded_dem;
+
+            // 3. 统计DEM可见和差异
+            if (point.visible_dem) {
+                local_visible_dem++;
+            }
+            if (point.visible_mesh != point.visible_dem) {
+                local_disagreement++;
+            }
+
+            // 4. 能量密度计算（只对mesh可见的点计算）
+            if (point.visible_dem) {
                 point.power_density = radar->CalculateSinglePointPowerDensity(point.position, &ct);
                 local_visible_mesh++;
             } else {
