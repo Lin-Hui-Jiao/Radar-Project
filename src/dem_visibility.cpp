@@ -97,17 +97,13 @@ bool DEMVisibility::IsOccluded(
     // DEM分辨率转换为米（使用纬度方向的转换，因为它更稳定）
     double dem_resolution_m = dem_->GetResolution() * METERS_PER_DEG_LAT;
 
-    // 【关键改进】增加2倍安全系数
-    // 原因：
-    // 1. 提高检测精度，减少遗漏
-    // 2. 增大与R-Tree方法的差异（有利于对比实验）
-    // 3. 在复杂地形下更保守的遮挡判断
-    int min_samples = static_cast<int>(std::ceil(horizontal_dist_m / dem_resolution_m) * 2);//这个地方增加两倍的安全系数，之后的实验效果可以从这里调节
-    int actual_sample_count = std::max(sample_count, min_samples);
+    // 根据DEM分辨率计算采样数
+    // 采样间隔应该与DEM分辨率一致，确保不会遗漏地形特征
+    // 不再使用默认下限，让低分辨率DEM真正使用更少的采样点
+    int actual_sample_count = static_cast<int>(std::ceil(horizontal_dist_m / dem_resolution_m));
 
-    // 为了性能考虑，限制最大采样数
-    const int MAX_SAMPLES = 1000;
-    actual_sample_count = std::min(actual_sample_count, MAX_SAMPLES);
+    // 确保至少有2个采样点（起点和终点之间至少1个中间点）
+    actual_sample_count = std::max(actual_sample_count, 2);
 
     // ========== 沿射线采样N个点 ==========
     std::vector<Vec3d> ray_points = SampleRayPoints(radar_pos, target_pos, actual_sample_count);
@@ -190,11 +186,10 @@ DEMVisibility::OcclusionDetail DEMVisibility::AnalyzeOcclusion(
     detail.horizontal_distance_m = horizontal_dist_m;
 
     double dem_resolution_m = dem_->GetResolution() * METERS_PER_DEG_LAT;
-    int min_samples = static_cast<int>(std::ceil(horizontal_dist_m / dem_resolution_m) * 2);
-    int actual_sample_count = std::max(sample_count, min_samples);
 
-    const int MAX_SAMPLES = 1000;
-    actual_sample_count = std::min(actual_sample_count, MAX_SAMPLES);
+    // 根据DEM分辨率计算采样数（与IsOccluded保持一致）
+    int actual_sample_count = static_cast<int>(std::ceil(horizontal_dist_m / dem_resolution_m));
+    actual_sample_count = std::max(actual_sample_count, 2);
     detail.actual_sample_count = actual_sample_count;
 
     detail.sample_points = SampleRayPoints(radar_pos, target_pos, actual_sample_count);
