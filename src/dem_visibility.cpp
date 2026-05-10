@@ -144,6 +144,51 @@ bool DEMVisibility::IsOccluded(
     return false;  // 可见
 }
 
+bool DEMVisibility::IsOccludedProjected(
+    const Vec3d& radar_pos,
+    const Vec3d& target_pos,
+    int sample_count
+) const {
+    (void)sample_count;
+
+    if (!dem_ || !dem_->IsLoaded()) {
+        return false;
+    }
+
+    const double dx = target_pos.x - radar_pos.x;
+    const double dy = target_pos.y - radar_pos.y;
+    if (std::abs(dx) < 1e-9 && std::abs(dy) < 1e-9) {
+        return false;
+    }
+
+    const double horizontal_dist_m = std::sqrt(dx * dx + dy * dy);
+    const double dem_resolution_m = std::abs(dem_->GetResolution());
+    if (dem_resolution_m <= 0.0) {
+        return false;
+    }
+
+    int actual_sample_count = static_cast<int>(std::ceil(horizontal_dist_m / dem_resolution_m));
+    actual_sample_count = std::max(actual_sample_count, 2);
+
+    std::vector<Vec3d> ray_points = SampleRayPoints(radar_pos, target_pos, actual_sample_count);
+    const float terrain_clearance = 0.05f;
+
+    for (size_t i = 1; i + 1 < ray_points.size(); i++) {
+        const Vec3d& point = ray_points[i];
+        float terrain_height = dem_->GetHeight(point.x, point.y);
+
+        if (terrain_height == dem_->GetNoDataValue()) {
+            continue;
+        }
+
+        if (point.z < terrain_height - terrain_clearance) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 /**
  * @brief 执行遮挡分析并返回详细信息（用于调试和可视化）
  *

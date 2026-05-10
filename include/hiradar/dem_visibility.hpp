@@ -58,6 +58,10 @@ public:
                     const Vec3d& target_pos,
                     int sample_count = 100) const;
 
+    bool IsOccludedProjected(const Vec3d& radar_pos,
+                             const Vec3d& target_pos,
+                             int sample_count = 100) const;
+
     /**
      * @brief 遮挡分析详细结果（用于调试和可视化）
      */
