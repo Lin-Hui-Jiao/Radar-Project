@@ -9,3 +9,6 @@ java/
 *.md
 *.tif
 *.btr
+.cache/
+.codex
+compile_commands.json

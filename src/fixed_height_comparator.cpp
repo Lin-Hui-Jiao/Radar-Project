@@ -363,7 +363,7 @@ FixedHeightComparator::ExperimentResult FixedHeightComparator::RunExperiment(
     result.total_time = total_time;
 
     // 输出计时信息
-    std::cout << "\n=== Timing Results ===" << std::endl;
+    std::cout << "\n=== Timing Results ======================================================================================================================" << std::endl;
     std::cout << "Parallel computation time: " << parallel_time << " seconds" << std::endl;
     std::cout << "Total experiment time: " << total_time << " seconds" << std::endl;
     std::cout << "Points per second: " << static_cast<double>(total_points) / parallel_time << std::endl;

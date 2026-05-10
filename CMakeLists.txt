@@ -229,3 +229,66 @@ install(TARGETS fixed_height_experiment DESTINATION bin)
 message(STATUS "Configured fixed_height_experiment executable")
 message(STATUS "  GDAL include: ${GDAL_INCLUDE_DIRS}")
 message(STATUS "  GDAL libraries: ${GDAL_LIBRARIES}")
+# ==============================================================================
+# 8. Build Fixed-Height Quadtree Prototype Module
+# ==============================================================================
+
+set(FIXED_HEIGHT_QUADTREE_SRCS
+    src/local_tangent_frame.cpp
+    src/energy_grid_2d.cpp
+    src/adaptive_quadtree_2d.cpp
+    src/fixed_height_field_builder_2d.cpp
+)
+
+add_library(fixed_height_quadtree_2d_lib STATIC ${FIXED_HEIGHT_QUADTREE_SRCS})
+
+target_include_directories(fixed_height_quadtree_2d_lib PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/vendor
+)
+
+target_link_libraries(fixed_height_quadtree_2d_lib PUBLIC
+    hiradar
+)
+
+add_executable(fixed_height_quadtree_2d
+    src/fixed_height_quadtree_2d.cpp
+)
+
+target_include_directories(fixed_height_quadtree_2d PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/vendor
+)
+
+target_link_libraries(fixed_height_quadtree_2d PRIVATE
+    fixed_height_quadtree_2d_lib
+)
+
+add_executable(fixed_height_quadtree_2d_tests
+    src/fixed_height_quadtree_2d_tests.cpp
+)
+
+target_include_directories(fixed_height_quadtree_2d_tests PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/vendor
+)
+
+target_link_libraries(fixed_height_quadtree_2d_tests PRIVATE
+    fixed_height_quadtree_2d_lib
+)
+
+enable_testing()
+add_test(NAME fixed_height_quadtree_2d_tests COMMAND fixed_height_quadtree_2d_tests)
+
+add_executable(fixed_height_quadtree_monte_carlo
+    src/fixed_height_quadtree_monte_carlo.cpp
+)
+
+target_include_directories(fixed_height_quadtree_monte_carlo PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/vendor
+)
+
+target_link_libraries(fixed_height_quadtree_monte_carlo PRIVATE
+    fixed_height_quadtree_2d_lib
+)
