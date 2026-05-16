@@ -1,3 +1,8 @@
+#if 0
+// Legacy experiment disabled: this file depends on the removed
+// hiradar/visibility_comparator.hpp API and is not part of the active CMake
+// build. Keeping it inactive prevents IntelliSense from reporting a missing
+// include for a translation unit that is intentionally disabled.
 #include "hiradar/dem_generator.hpp"
 #include "hiradar/dem_loader.hpp"
 #include "hiradar/dem_visibility.hpp"
@@ -201,3 +206,4 @@ int main(int argc, char** argv) {
 
     return 0;
 }
+#endif

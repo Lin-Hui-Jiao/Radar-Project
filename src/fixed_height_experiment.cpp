@@ -40,7 +40,7 @@ struct ExperimentOptions {
     RTreeCoordConfig coord_config;
 
     std::string index_file = "../../test_area_1_1.3idx";
-    std::string output_dir = "fixed_height_1km_outputs";
+    std::string output_dir = "fixed_height_2km_outputs";
 
     double radar_lon = 0.0;
     double radar_lat = 0.0;
@@ -64,7 +64,7 @@ void PrintUsage(const char* exe_name) {
         << "Usage: " << exe_name << " [options]\n\n"
         << "Dataset options:\n"
         << "  --index <path>             RTree index file (default: ../../test_area_1_1.3idx)\n"
-        << "  --output-dir <dir>         Output/cache directory (default: fixed_height_1km_outputs)\n"
+        << "  --output-dir <dir>         Output/cache directory (default: fixed_height_2km_outputs)\n"
         << "  --min-lon <deg>            Study area min longitude\n"
         << "  --min-lat <deg>            Study area min latitude\n"
         << "  --max-lon <deg>            Study area max longitude\n"
@@ -266,7 +266,7 @@ int main(int argc, char** argv) {
     if (QueryTerrainHeight(rtree, options.radar_lon, options.radar_lat, options.coord_config, terrain_alt)) {
         radar->_cached_abs_alt_m = terrain_alt + options.radar_alt_relative_m;
     } else {
-        std::cerr << "Warning: failed to query terrain height for radar with the 1km coord config; "
+        std::cerr << "Warning: failed to query terrain height for radar with the 2km coord config; "
                   << "using radar relative height as absolute fallback." << std::endl;
         radar->_cached_abs_alt_m = options.radar_alt_relative_m;
     }
@@ -313,7 +313,7 @@ int main(int argc, char** argv) {
 
     for (int i = 0; i < num_configs; i++) {
         const DEMConfig& config = DEM_CONFIGS[i];
-        const std::string filename = "1km_dem_" + ResolutionTag(config.approx_resolution_m) + ".tif";
+        const std::string filename = "2km_dem_" + ResolutionTag(config.approx_resolution_m) + ".tif";
         const std::filesystem::path dem_path = output_dir / filename;
         const std::string dem_path_str = dem_path.string();
 
@@ -391,11 +391,11 @@ int main(int argc, char** argv) {
         FixedHeightComparator::PrintSummary(result);
 
         const std::filesystem::path csv_file =
-            output_dir / ("1km_fixed_height_result_" + resolution_tag + ".csv");
+            output_dir / ("2km_fixed_height_result_" + resolution_tag + ".csv");
         FixedHeightComparator::ExportResultsToCSV(result, csv_file.string());
 
         const std::filesystem::path png_file =
-            output_dir / ("1km_fixed_height_viz_" + resolution_tag + ".png");
+            output_dir / ("2km_fixed_height_viz_" + resolution_tag + ".png");
         FixedHeightComparator::GenerateVisualization(result, png_file.string());
 
         std::cout << std::endl;
@@ -409,9 +409,9 @@ int main(int argc, char** argv) {
     std::cout << "  All Experiments Completed!" << std::endl;
     std::cout << "========================================" << std::endl;
     std::cout << "\nGenerated files are under: " << output_dir.string() << std::endl;
-    std::cout << "  DEM files: 1km_dem_*.tif" << std::endl;
-    std::cout << "  CSV results: 1km_fixed_height_result_*.csv" << std::endl;
-    std::cout << "  PNG visualizations: 1km_fixed_height_viz_*.png" << std::endl;
+    std::cout << "  DEM files: 2km_dem_*.tif" << std::endl;
+    std::cout << "  CSV results: 2km_fixed_height_result_*.csv" << std::endl;
+    std::cout << "  PNG visualizations: 2km_fixed_height_viz_*.png" << std::endl;
 
     return 0;
 }
