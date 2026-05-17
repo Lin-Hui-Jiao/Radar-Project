@@ -97,6 +97,9 @@ public:
   
   ///Check for intersection between a 3D segment and elements within a 3D R-tree.
   bool Intersect3d(const ELEMTYPE s_start[3], const ELEMTYPE s_end[3], std::function<bool (const DATATYPE&,const ELEMTYPE [3],const ELEMTYPE [3])> callback) const;
+
+  template <typename Callback>
+  bool Intersect3dFast(const ELEMTYPE s_start[3], const ELEMTYPE s_end[3], Callback&& callback) const;
   
   ///Retrieve the height at a specific 3D location using a 3D R-tree structure.
   ELEMTYPE Getheight3d(const ELEMTYPE x, const ELEMTYPE y, std::function<ELEMTYPE (const DATATYPE&,const ELEMTYPE,const ELEMTYPE)> callback) const;
@@ -377,6 +380,8 @@ protected:
   void ReInsert(Node* a_node, ListNode** a_listNode);
   bool Search(Node* a_node, Rect* a_rect, int& a_foundCount, std::function<bool (const DATATYPE&)> callback) const;
   bool Intersect3d(Node* a_node, Seg3d* a_rect, bool& IntersectFlag, std::function<bool (const DATATYPE&,const ELEMTYPE a_min[3],const ELEMTYPE a_max[3])> callback) const;
+  template <typename Callback>
+  bool Intersect3dFast(Node* a_node, Seg3d* a_rect, bool& IntersectFlag, Callback& callback) const;
   bool Getheight3d(Node* a_node, ELEMTYPE x, ELEMTYPE y, ELEMTYPE& Height,  std::function<ELEMTYPE (const DATATYPE&,const ELEMTYPE,const ELEMTYPE)> callback) const;
 
   void RemoveAllRec(Node* a_node);

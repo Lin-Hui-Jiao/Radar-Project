@@ -43,6 +43,24 @@ bool RTREE_QUAL::Intersect3d(const ELEMTYPE s_start[3], const ELEMTYPE s_end[3],
     return IntersectFlag;
 }
 
+RTREE_TEMPLATE
+template <typename Callback>
+bool RTREE_QUAL::Intersect3dFast(const ELEMTYPE s_start[3], const ELEMTYPE s_end[3], Callback&& callback) const
+{
+    Seg3d seg;
+    for (int axis = 0; axis < NUMDIMS; ++axis)
+    {
+        seg.s_start[axis] = s_start[axis];
+        seg.s_end[axis] = s_end[axis];
+    }
+    bool IntersectFlag = false;
+
+    auto local_callback = std::forward<Callback>(callback);
+    Intersect3dFast(m_root, &seg, IntersectFlag, local_callback);
+
+    return IntersectFlag;
+}
+
 // This function retrieves the height at a specific 3D location using a 3D R-tree structure.
 // It takes the x and y coordinates of the location and a callback function that processes the data.
 // The function returns the height value at the given location.
@@ -175,6 +193,46 @@ bool RTREE_QUAL::Intersect3d(Node *a_node, Seg3d *a_seg, bool &IntersectFlag,
         }
     }
     // If no intersections were found, continue the search.
+    return true;
+}
+
+RTREE_TEMPLATE
+template <typename Callback>
+bool RTREE_QUAL::Intersect3dFast(Node *a_node, Seg3d *a_seg, bool &IntersectFlag, Callback& callback) const
+{
+    ASSERT(a_node);
+    ASSERT(a_node->m_level >= 0);
+    ASSERT(a_seg);
+
+    if (a_node->IsInternalNode())
+    {
+        for (int index = 0; index < a_node->m_count; ++index)
+        {
+            if (Overlap3d(a_seg, &a_node->m_branch[index].m_rect))
+            {
+                if (!Intersect3dFast(a_node->m_branch[index].m_child, a_seg, IntersectFlag, callback))
+                {
+                    return false;
+                }
+            }
+        }
+    }
+    else
+    {
+        for (int index = 0; index < a_node->m_count; ++index)
+        {
+            if (Overlap3d(a_seg, &a_node->m_branch[index].m_rect))
+            {
+                DATATYPE &id = a_node->m_branch[index].m_data;
+                if (!callback(id, a_seg->s_start, a_seg->s_end))
+                {
+                    IntersectFlag = true;
+                    return false;
+                }
+            }
+        }
+    }
+
     return true;
 }
 
