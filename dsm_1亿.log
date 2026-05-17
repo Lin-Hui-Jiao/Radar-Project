@@ -1,0 +1,58 @@
+1核心测试
+  DSM warmup 1: 251.348491 s, 397853.9899 q/s
+1m_DSM points=100000000 time_s=251.374989 qps=397812.050934 avg_us=2.513750 peak_gb=3.027584 visible=68537603 occluded=31462397 min_density=0.000167 max_density=0.006049
+
+CSV written: scaling_memory_benchmark.csv
+
+Final process peak memory: 3.027584 GB
+
+
+
+
+2核心测试
+  DSM warmup 1: 125.6632658 s, 795777.5042 q/s
+1m_DSM points=100000000 time_s=125.661340 qps=795789.697551 avg_us=1.256613 peak_gb=3.027630 visible=68537603 occluded=31462397 min_density=0.000167 max_density=0.006049
+
+CSV written: scaling_memory_benchmark.csv
+
+Final process peak memory: 3.027630 GB
+
+
+4核心测试
+  DSM warmup 1: 62.84589217 s, 1591193.896 q/s
+1m_DSM points=100000000 time_s=62.818772 qps=1591880.859982 avg_us=0.628188 peak_gb=3.027664 visible=68537603 occluded=31462397 min_density=0.000167 max_density=0.006049
+
+CSV written: scaling_memory_benchmark.csv
+
+Final process peak memory: 3.027664 GB
+
+
+8核心测试
+  DSM warmup 1: 31.43815092 s, 3180848.653 q/s
+1m_DSM points=100000000 time_s=31.435627 qps=3181104.015855 avg_us=0.314356 peak_gb=3.028301 visible=68537603 occluded=31462397 min_density=0.000167 max_density=0.006049
+
+CSV written: scaling_memory_benchmark.csv
+
+Final process peak memory: 3.028301 GB
+
+
+16核心测试
+  DSM warmup 1: 15.72540586 s, 6359136.35 q/s
+1m_DSM points=100000000 time_s=15.732207 qps=6356387.159781 avg_us=0.157322 peak_gb=3.028625 visible=68537603 occluded=31462397 min_density=0.000167 max_density=0.006049
+
+CSV written: scaling_memory_benchmark.csv
+
+Final process peak memory: 3.028625 GB
+
+
+
+
+
+32核心测试
+  DSM warmup 1: 7.884612295 s, 12682931.8 q/s
+1m_DSM points=100000000 time_s= 7.877177  qps=12694903.174295 avg_us=0.078772 peak_gb=3.028370 visible=68537603 occluded=31462397 min_density=0.000167 max_density=0.006049
+
+CSV written: scaling_memory_benchmark.csv
+
+Final process peak memory: 3.028370 GB
+

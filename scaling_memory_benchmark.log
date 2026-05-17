@@ -1,0 +1,660 @@
+可以，按下面这样编译和运行。
+
+**1. 进入项目根目录**
+
+```bash
+cd /home/rootjiao/radar-demo-0927-shiyan
+```
+
+**2. 编译**
+
+推荐先用通用版本，不加 `-march=native`，方便在服务器上跑：
+
+```bash
+g++ -std=c++17 -O3 -DNDEBUG -fopenmp \
+  -Iinclude -I/usr/include/gdal \
+  src/scaling_memory_benchmark.cpp \
+  src/occlusion_utils.cpp \
+  src/dem_loader.cpp \
+  src/radar.cpp \
+  src/caltools.cpp \
+  src/interface.cpp \
+  -lproj -lgdal -lpng \
+  -o build/bin/scaling_memory_benchmark
+```
+
+如果缺库，需要先安装：
+
+```bash
+sudo apt install build-essential libgdal-dev libproj-dev libpng-dev
+```
+
+**3. 先跑一个小样本测试**
+
+```bash
+cd /home/rootjiao/radar-demo-0927-shiyan/build/bin
+
+./scaling_memory_benchmark \
+  --method both \
+  --sizes 1000 \
+  --index ../../test_area.3idx \
+  --dem dem_1m.tif \
+  --min-lon 114.164571 --max-lon 114.169422 \
+  --min-lat 22.278365 --max-lat 22.28288 \
+  --min-alt 0 --max-alt 100 \
+  --seed 20260517 \
+  --radar-lon 114.1670 \
+  --radar-lat 22.2806 \
+  --radar-alt 80 \
+  --min-x 835000 \
+  --min-y 815500 \
+  --index-range-x -1975 \
+  --index-range-y 43 \
+  --threads 32 \
+  --warmup-runs 0 \
+  --no-csv
+```
+
+**4. 正式跑 25万、100万、500万、1000万随机三维点**
+
+```bash
+./scaling_memory_benchmark \
+  --method both \
+  --sizes 250000,1000000,5000000,10000000 \
+  --index ../../test_area.3idx \
+  --dem dem_1m.tif \
+  --min-lon 114.164571 --max-lon 114.169422 \
+  --min-lat 22.278365 --max-lat 22.28288 \
+  --min-alt 0 --max-alt 100 \
+  --seed 20260517 \
+  --radar-lon 114.1670 \
+  --radar-lat 22.2806 \
+  --radar-alt 80 \
+  --min-x 835000 \
+  --min-y 815500 \
+  --index-range-x -1975 \
+  --index-range-y 43 \
+  --threads 32 \
+  --warmup-runs 1 \
+  --csv scaling_random_3d.csv
+```
+
+如果你要更准确统计内存，建议 VRPF 和 DSM 分开跑，因为 `--method both` 会同时加载 RTree 和 DEM，峰值内存会互相影响。分开就是把上面的 `--method both` 改成：
+
+```bash
+--method vrpf --csv scaling_random_3d_vrpf.csv
+```
+
+以及：
+
+```bash
+--method dsm --csv scaling_random_3d_dsm.csv
+```
+
+
+
+
+./scaling_memory_benchmark   --method vrpf   --sizes 250000   --index ../../test_area.3idx   --dem dem_1m.tif   --min-lon 114.164571 --max-lon 114.169422   --min-lat 22.278365 --max-lat 22.28288   --min-alt 0 --max-alt 100   --seed 20260517   --radar-lon 114.1670   --radar-lat 22.2806   --radar-alt 80   --min-x 835000   --min-y 815500   --index-range-x -1975   --index-range-y 43   --threads 8
+
+
+-----------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------
+
+root@iZbp1acaw5wdllm90m1hjdZ:~/Radar-Project/build/bin# ./scaling_memory_benchmark   --method vrpf   --sizes 250000   --index ../../test_area.3idx   --dem dem_1m.tif   --min-lon 114.164571 --max-lon 114.169422   --min-lat 22.278365 --max-lat 22.28288   --min-alt 0 --max-alt 100   --seed 20260517   --radar-lon 114.1670   --radar-lat 22.2806   --radar-alt 80   --min-x 835000   --min-y 815500   --index-range-x -1975   --index-range-y 43   --threads 8
+========================================
+  VRPF vs 1 m DSM Scaling Benchmark
+========================================
+Method: vrpf
+Threads: 8
+Max target points: 250000
+Lon range: [114.1645710000, 114.1694220000]
+Lat range: [22.2783650000, 22.2828800000]
+Alt range: [0.0000000000, 100.0000000000] m
+Random seed: 20260517
+Loading VRPF RTree: ../../test_area.3idx
+雷达的绝对海拔是: 164.4548712
+雷达的相对海拔是: 80
+VRPF radar RTree xyz: -1724.628608, 290.526573, 164.4593204
+Peak memory after RTree load: 1.525848389 GB
+
+--- target points: 250000 ---
+Random 3D sample points generated: 250000 in 0.001509361 s. Peak memory now: 1.532981873 GB
+
+=== IN-RANGE Point 0 ===
+Target: (114.1657742, 22.2797941, 66.46506586)
+theta=125.466362° (IN RANGE [-60,60]), phi=-32.39229202°
+Distance R=182.9229889m
+minradxtheta=0, minradxphi=0
+etheta=1, ephi=1
+etheta_table[0]=1
+
+=== IN-RANGE Point 1 ===
+Target: (114.1669487, 22.28209872, 38.44053839)
+theta=1.69028759° (IN RANGE [-60,60]), phi=-37.07398987°
+Distance R=209.0398102m
+minradxtheta=0, minradxphi=0
+etheta=1, ephi=1
+etheta_table[0]=1
+
+=== IN-RANGE Point 2 ===
+Target: (114.1680711, 22.28221733, 87.4914075)
+theta=-31.53473473° (IN RANGE [-60,60]), phi=-20.04359818°
+Distance R=224.5696869m
+minradxtheta=0, minradxphi=0
+etheta=1, ephi=1
+etheta_table[0]=1
+
+=== IN-RANGE Point 3 ===
+Target: (114.1662782, 22.28169348, 85.26634577)
+theta=31.46997833° (IN RANGE [-60,60]), phi=-29.02859497°
+Distance R=163.2017059m
+minradxtheta=0, minradxphi=0
+etheta=1, ephi=1
+etheta_table[0]=1
+
+=== IN-RANGE Point 4 ===
+Target: (114.1657786, 22.28251959, 50.5072606)
+theta=30.35478973° (IN RANGE [-60,60]), phi=-24.71785355°
+Distance R=272.514679m
+minradxtheta=0, minradxphi=0
+etheta=1, ephi=1
+etheta_table[0]=1
+  VRPF warmup 1: 0.096798379 s, 2582687.877 q/s
+VRPF points=250000 time_s=0.096053 qps=2602718.768793 avg_us=0.384214 peak_gb=1.537289 visible=167806 occluded=82194 min_density=0.000170 max_density=0.005904 candidates=208394
+
+CSV written: scaling_memory_benchmark.csv
+
+Final process peak memory: 1.537289 GB
+
+-----------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------
+
+./scaling_memory_benchmark   --method vrpf   --sizes 100000   --index ../../test_area.3idx   --dem dem_1m.tif   --min-lon 114.164571 --max-lon 114.169422   --min-lat 22.278365 --max-lat 22.28288   --min-alt 0 --max-alt 100   --seed 20260517   --radar-lon 114.1670   --radar-lat 22.2806   --radar-alt 80   --min-x 835000   --min-y 815500   --index-range-x -1975   --index-range-y 43   --threads 1
+
+root@iZbp1acaw5wdllm90m1hjdZ:~/Radar-Project/build/bin# ./scaling_memory_benchmark   --method vrpf   --sizes 100000   --index ../../test_area.3idx   --dem dem_1m.tif   --min-lon 114.164571 --max-lon 114.169422   --min-lat 22.278365 --max-lat 22.28288   --min-alt 0 --max-alt 100   --seed 20260517   --radar-lon 114.1670   --radar-lat 22.2806   --radar-alt 80   --min-x 835000   --min-y 815500   --index-range-x -1975   --index-range-y 43   --threads 1
+========================================
+  VRPF vs 1 m DSM Scaling Benchmark  100000 points with 1 thread
+========================================
+Method: vrpf
+Threads: 1
+Max target points: 100000
+Lon range: [114.1645710000, 114.1694220000]
+Lat range: [22.2783650000, 22.2828800000]
+Alt range: [0.0000000000, 100.0000000000] m
+Random seed: 20260517
+Loading VRPF RTree: ../../test_area.3idx
+雷达的绝对海拔是: 164.4548712
+雷达的相对海拔是: 80
+VRPF radar RTree xyz: -1724.628608, 290.526573, 164.4593204
+Peak memory after RTree load: 1.525794983 GB
+
+--- target points: 100000 ---
+Random 3D sample points generated: 100000 in 0.000784727 s. Peak memory now: 1.528396606 GB
+
+=== IN-RANGE Point 0 ===
+Target: (114.1657742, 22.2797941, 66.46506586)
+theta=125.466362° (IN RANGE [-60,60]), phi=-32.39229202°
+Distance R=182.9229889m
+minradxtheta=0, minradxphi=0
+etheta=1, ephi=1
+etheta_table[0]=1
+
+=== IN-RANGE Point 1 ===
+Target: (114.1669487, 22.28209872, 38.44053839)
+theta=1.69028759° (IN RANGE [-60,60]), phi=-37.07398987°
+Distance R=209.0398102m
+minradxtheta=0, minradxphi=0
+etheta=1, ephi=1
+etheta_table[0]=1
+
+=== IN-RANGE Point 2 ===
+Target: (114.1680711, 22.28221733, 87.4914075)
+theta=-31.53473473° (IN RANGE [-60,60]), phi=-20.04359818°
+Distance R=224.5696869m
+minradxtheta=0, minradxphi=0
+etheta=1, ephi=1
+etheta_table[0]=1
+
+=== IN-RANGE Point 3 ===
+Target: (114.1662782, 22.28169348, 85.26634577)
+theta=31.46997833° (IN RANGE [-60,60]), phi=-29.02859497°
+Distance R=163.2017059m
+minradxtheta=0, minradxphi=0
+etheta=1, ephi=1
+etheta_table[0]=1
+
+=== IN-RANGE Point 4 ===
+Target: (114.1657786, 22.28251959, 50.5072606)
+theta=30.35478973° (IN RANGE [-60,60]), phi=-24.71785355°
+Distance R=272.514679m
+minradxtheta=0, minradxphi=0
+etheta=1, ephi=1
+etheta_table[0]=1
+  VRPF warmup 1: 0.191575791 s, 521986.622 q/s
+VRPF points=100000 time_s=0.188416 qps=530741.432778 avg_us=1.884157 peak_gb=1.528946 visible=67238 occluded=32762 min_density=0.000170 max_density=0.005815 candidates=82881
+
+CSV written: scaling_memory_benchmark.csv
+
+Final process peak memory: 1.528946 GB
+
+
+=================================================
+
+
+
+root@iZbp1acaw5wdllm90m1hjdZ:~/Radar-Project/build/bin# ./scaling_memory_benchmark   --method vrpf   --sizes 100000   --index ../../test_area.3idx   --dem dem_1m.tif   --min-lon 114.164571 --max-lon 114.169422   --min-lat 22.278365 --max-lat 22.28288   --min-alt 0 --max-alt 100   --seed 20260517   --radar-lon 114.1670   --radar-lat 22.2806   --radar-alt 80   --min-x 835000   --min-y 815500   --index-range-x -1975   --index-range-y 43   --threads 2
+========================================
+  VRPF vs 1 m DSM Scaling Benchmark  100000 points with 2 threads
+========================================
+Method: vrpf
+Threads: 2
+Max target points: 100000
+Lon range: [114.1645710000, 114.1694220000]
+Lat range: [22.2783650000, 22.2828800000]
+Alt range: [0.0000000000, 100.0000000000] m
+Random seed: 20260517
+Loading VRPF RTree: ../../test_area.3idx
+雷达的绝对海拔是: 164.4548712
+雷达的相对海拔是: 80
+VRPF radar RTree xyz: -1724.628608, 290.526573, 164.4593204
+Peak memory after RTree load: 1.52570343 GB
+
+--- target points: 100000 ---
+Random 3D sample points generated: 100000 in 0.000716944 s. Peak memory now: 1.528305054 GB
+
+=== IN-RANGE Point 0 ===
+Target: (114.1657742, 22.2797941, 66.46506586)
+theta=125.466362° (IN RANGE [-60,60]), phi=-32.39229202°
+Distance R=182.9229889m
+minradxtheta=0, minradxphi=0
+etheta=1, ephi=1
+etheta_table[0]=1
+
+=== IN-RANGE Point 1
+=== IN-RANGE Point 1 ===
+ ===Target: (
+Target: (114.1669487, 22.28209872, 38.44053839)
+theta=1.69028759° (IN RANGE [-60,60]), phi=114.1672261-37.07398987°
+Distance R=209.0398102m
+minradxtheta=0, minradxphi=0
+etheta=1, ephi=1
+etheta_table[0]=1
+
+=== IN-RANGE Point 2 ===
+, Target: (114.1680711, 22.28221733, 87.4914075)
+theta=-31.53473473° (IN RANGE [-60,60]), phi=-20.04359818°
+Distance R=224.5696869m
+22.27978842minradxtheta=0, minradxphi=0
+etheta=1, ephi=1
+etheta_table[0]=1
+, 55.45883171)
+theta=-165.1610413° (IN RANGE [-60,60]), phi=-49.43691254°
+Distance R=143.4801483m
+minradxtheta=0, minradxphi=0
+etheta=1, ephi=1
+
+=== IN-RANGE Point 3 ===
+Target: (114.1662782, 22.28169348, 85.26634577)
+theta=31.46997833° (IN RANGE [-60,60]), phi=-29.02859497°
+Distance R=163.2017059m
+minradxtheta=0, minradxphi=0
+etheta=1, ephi=1
+etheta_table[0]=1
+etheta_table[0]=1
+  VRPF warmup 1: 0.104084904 s, 960754.1167 q/s
+VRPF points=100000 time_s=0.102817 qps=972600.577355 avg_us=1.028171 peak_gb=1.529354 visible=67238 occluded=32762 min_density=0.000170 max_density=0.005815 candidates=82881
+
+CSV written: scaling_memory_benchmark.csv
+
+Final process peak memory: 1.529354 GB
+
+
+
+
+root@iZbp1acaw5wdllm90m1hjdZ:~/Radar-Project/build/bin# ./scaling_memory_benchmark   --method vrpf   --sizes 100000   --index ../../test_area.3idx   --dem dem_1m.tif   --min-lon 114.164571 --max-lon 114.169422   --min-lat 22.278365 --max-lat 22.28288   --min-alt 0 --max-alt 100   --seed 20260517   --radar-lon 114.1670   --radar-lat 22.2806   --radar-alt 80   --min-x 835000   --min-y 815500   --index-range-x -1975   --index-range-y 43   --threads 4
+========================================
+  VRPF vs 1 m DSM Scaling Benchmark  100000 points with 4 threads
+========================================
+Method: vrpf
+Threads: 4
+Max target points: 100000
+Lon range: [114.1645710000, 114.1694220000]
+Lat range: [22.2783650000, 22.2828800000]
+Alt range: [0.0000000000, 100.0000000000] m
+Random seed: 20260517
+Loading VRPF RTree: ../../test_area.3idx
+雷达的绝对海拔是: 164.4548712
+雷达的相对海拔是: 80
+VRPF radar RTree xyz: -1724.628608, 290.526573, 164.4593204
+Peak memory after RTree load: 1.525951385 GB
+
+--- target points: 100000 ---
+Random 3D sample points generated: 100000 in 0.000690933 s. Peak memory now: 1.528804779 GB
+
+=== IN-RANGE Point 0 ===
+Target: (114.1657742, 22.2797941, 66.46506586)
+theta=125.466362° (IN RANGE [-60,60]), phi=-32.39229202°
+Distance R=182.9229889m
+minradxtheta=0, minradxphi=0
+etheta=1, ephi=1
+etheta_table[0]=1
+
+=== IN-RANGE Point 1 ===
+Target: (114.1669487, 22.28209872, 38.44053839)
+theta=1.69028759° (IN RANGE [-60,60]), phi=-37.07398987°
+Distance R=209.0398102m
+minradxtheta=0, minradxphi=0
+etheta=1, ephi=1
+etheta_table[0]=1
+
+=== IN-RANGE Point 2 ===
+Target: (114.1680711, 22.28221733, 87.4914075)
+theta=-31.53473473° (IN RANGE [-60,60]), phi=-20.04359818°
+Distance R=224.5696869m
+minradxtheta=0, minradxphi=0
+etheta=1, ephi=1
+etheta_table[0]=1
+
+=== IN-RANGE Point 3 ===
+Target: (114.1662782, 22.28169348, 85.26634577)
+theta=31.46997833° (IN RANGE [-60,60]), phi=-29.02859497°
+Distance R=163.2017059m
+minradxtheta=0, minradxphi=0
+etheta=1, ephi=1
+etheta_table[0]=1
+
+=== IN-RANGE Point 4 ===
+Target: (114.1657786, 22.28251959, 50.5072606)
+theta=30.35478973° (IN RANGE [-60,60]), phi=-24.71785355°
+Distance R=272.514679m
+minradxtheta=0, minradxphi=0
+etheta=1, ephi=1
+etheta_table[0]=1
+  VRPF warmup 1: 0.067703453 s, 1477029.539 q/s
+VRPF points=100000 time_s=0.065298 qps=1531445.116637 avg_us=0.652978 peak_gb=1.530769 visible=67238 occluded=32762 min_density=0.000170 max_density=0.005815 candidates=82881
+
+CSV written: scaling_memory_benchmark.csv
+
+Final process peak memory: 1.530769 GB
+
+
+
+root@iZbp1acaw5wdllm90m1hjdZ:~/Radar-Project/build/bin# ./scaling_memory_benchmark   --method vrpf   --sizes 100000   --index ../../test_area.3idx   --dem dem_1m.tif   --min-lon 114.164571 --max-lon 114.169422   --min-lat 22.278365 --max-lat 22.28288   --min-alt 0 --max-alt 100   --seed 20260517   --radar-lon 114.1670   --radar-lat 22.2806   --radar-alt 80   --min-x 835000   --min-y 815500   --index-range-x -1975   --index-range-y 43   --threads 8
+========================================
+  VRPF vs 1 m DSM Scaling Benchmark  100000 points with 8 threads
+========================================
+Method: vrpf
+Threads: 8
+Max target points: 100000
+Lon range: [114.1645710000, 114.1694220000]
+Lat range: [22.2783650000, 22.2828800000]
+Alt range: [0.0000000000, 100.0000000000] m
+Random seed: 20260517
+Loading VRPF RTree: ../../test_area.3idx
+雷达的绝对海拔是: 164.4548712
+雷达的相对海拔是: 80
+VRPF radar RTree xyz: -1724.628608, 290.526573, 164.4593204
+Peak memory after RTree load: 1.525665283 GB
+
+--- target points: 100000 ---
+Random 3D sample points generated: 100000 in 0.000726525 s. Peak memory now: 1.528518677 GB
+
+=== IN-RANGE Point 0 ===
+Target: (114.1657742, 22.2797941, 66.46506586)
+theta=125.466362° (IN RANGE [-60,60]), phi=-32.39229202°
+Distance R=182.9229889m
+minradxtheta=0, minradxphi=0
+etheta=1, ephi=1
+etheta_table[0]=1
+
+=== IN-RANGE Point 1 ===
+Target: (114.1669487, 22.28209872, 38.44053839)
+theta=1.69028759° (IN RANGE [-60,60]), phi=-37.07398987°
+Distance R=209.0398102m
+minradxtheta=0, minradxphi=0
+etheta=1, ephi=1
+etheta_table[0]=1
+
+=== IN-RANGE Point 2 ===
+Target: (114.1680711, 22.28221733, 87.4914075)
+theta=-31.53473473° (IN RANGE [-60,60]), phi=-20.04359818°
+Distance R=224.5696869m
+minradxtheta=0, minradxphi=0
+etheta=1, ephi=1
+etheta_table[0]=1
+
+=== IN-RANGE Point 3 ===
+Target: (114.1662782, 22.28169348, 85.26634577)
+theta=31.46997833° (IN RANGE [-60,60]), phi=-29.02859497°
+Distance R=163.2017059m
+minradxtheta=0, minradxphi=0
+etheta=1, ephi=1
+etheta_table[0]=1
+
+=== IN-RANGE Point 4 ===
+Target: (114.1657786, 22.28251959, 50.5072606)
+theta=30.35478973° (IN RANGE [-60,60]), phi=-24.71785355°
+Distance R=272.514679m
+minradxtheta=0, minradxphi=0
+etheta=1, ephi=1
+etheta_table[0]=1
+  VRPF warmup 1: 0.060604954 s, 1650030.128 q/s
+VRPF points=100000 time_s=0.059126 qps=1691310.612661 avg_us=0.591257 peak_gb=1.532883 visible=67238 occluded=32762 min_density=0.000170 max_density=0.005815 candidates=82881
+
+CSV written: scaling_memory_benchmark.csv
+
+Final process peak memory: 1.532883 GB
+
+
+
+
+
+root@iZbp1acaw5wdllm90m1hjdZ:~/Radar-Project/build/bin# ./scaling_memory_benchmark   --method vrpf   --sizes 100000   --index ../../test_area.3idx   --dem dem_1m.tif   --min-lon 114.164571 --max-lon 114.169422   --min-lat 22.278365 --max-lat 22.28288   --min-alt 0 --max-alt 100   --seed 20260517   --radar-lon 114.1670   --radar-lat 22.2806   --radar-alt 80   --min-x 835000   --min-y 815500   --index-range-x -1975   --index-range-y 43   --threads 16
+========================================
+  VRPF vs 1 m DSM Scaling Benchmark  100000 points with 16 threads
+========================================
+Method: vrpf
+Threads: 16
+Max target points: 100000
+Lon range: [114.1645710000, 114.1694220000]
+Lat range: [22.2783650000, 22.2828800000]
+Alt range: [0.0000000000, 100.0000000000] m
+Random seed: 20260517
+Loading VRPF RTree: ../../test_area.3idx
+雷达的绝对海拔是: 164.4548712
+雷达的相对海拔是: 80
+VRPF radar RTree xyz: -1724.628608, 290.526573, 164.4593204
+Peak memory after RTree load: 1.525527954 GB
+
+--- target points: 100000 ---
+Random 3D sample points generated: 100000 in 0.000849508 s. Peak memory now: 1.528396606 GB
+
+=== IN-RANGE Point 0 ===
+Target: (114.1657742, 22.2797941, 66.46506586)
+theta=125.466362° (IN RANGE [-60,60]), phi=-32.39229202°
+Distance R=182.9229889m
+minradxtheta=0, minradxphi=0
+etheta=1, ephi=1
+etheta_table[0]=1
+
+=== IN-RANGE Point 1 ===
+Target: (114.1669487, 22.28209872, 38.44053839)
+theta=1.69028759° (IN RANGE [-60,60]), phi=-37.07398987°
+Distance R=209.0398102m
+minradxtheta=0, minradxphi=0
+etheta=1, ephi=1
+etheta_table[0]=1
+
+=== IN-RANGE Point 2 ===
+Target: (114.1680711, 22.28221733, 87.4914075)
+theta=-31.53473473° (IN RANGE [-60,60]), phi=-20.04359818°
+Distance R=224.5696869m
+minradxtheta=0, minradxphi=0
+etheta=1, ephi=1
+etheta_table[0]=1
+
+=== IN-RANGE Point 3 ===
+Target: (114.1662782, 22.28169348, 85.26634577)
+theta=31.46997833° (IN RANGE [-60,60]), phi=-29.02859497°
+Distance R=163.2017059m
+minradxtheta=0, minradxphi=0
+etheta=1, ephi=1
+etheta_table[0]=1
+
+=== IN-RANGE Point 4 ===
+Target: (114.1657786, 22.28251959, 50.5072606)
+theta=30.35478973° (IN RANGE [-60,60]), phi=-24.71785355°
+Distance R=272.514679m
+minradxtheta=0, minradxphi=0
+etheta=1, ephi=1
+etheta_table[0]=1
+  VRPF warmup 1: 0.075862946 s, 1318166.579 q/s
+VRPF points=100000 time_s=0.073105 qps=1367896.353508 avg_us=0.731050 peak_gb=1.536949 visible=67238 occluded=32762 min_density=0.000170 max_density=0.005815 candidates=82881
+
+CSV written: scaling_memory_benchmark.csv
+
+Final process peak memory: 1.536949 GB
+
+
+
+
+
+
+
+
+root@iZbp1acaw5wdllm90m1hjdZ:~/Radar-Project/build/bin# ./scaling_memory_benchmark   --method vrpf   --sizes 100000   --index ../../test_area.3idx   --dem dem_1m.tif   --min-lon 114.164571 --max-lon 114.169422   --min-lat 22.278365 --max-lat 22.28288   --min-alt 0 --max-alt 100   --seed 20260517   --radar-lon 114.1670   --radar-lat 22.2806   --radar-alt 80   --min-x 835000   --min-y 815500   --index-range-x -1975   --index-range-y 43   --threads 32
+========================================
+  VRPF vs 1 m DSM Scaling Benchmark  100000 points with 32 threads
+========================================
+Method: vrpf
+Threads: 32
+Max target points: 100000
+Lon range: [114.1645710000, 114.1694220000]
+Lat range: [22.2783650000, 22.2828800000]
+Alt range: [0.0000000000, 100.0000000000] m
+Random seed: 20260517
+Loading VRPF RTree: ../../test_area.3idx
+雷达的绝对海拔是: 164.4548712
+雷达的相对海拔是: 80
+VRPF radar RTree xyz: -1724.628608, 290.526573, 164.4593204
+Peak memory after RTree load: 1.525852203 GB
+
+--- target points: 100000 ---
+Random 3D sample points generated: 100000 in 0.001006834 s. Peak memory now: 1.528957367 GB
+
+=== IN-RANGE Point 0 ===
+Target: (
+=== IN-RANGE Point 0 ===
+Target: (114.1657742, 22.2797941, 114.1681213, 66.46506586)
+theta=125.466362° (IN RANGE [-60,60]), phi=22.28122201-32.39229202, °
+Distance R=182.9229889m
+minradxtheta=61.680502510, minradxphi=)
+theta=-59.20443344° (IN RANGE [-60,60]), phi=0
+etheta=1, ephi=1
+etheta_table[0]=1
+-37.283638°
+Distance R=169.668869m
+minradxtheta=0, minradxphi=0
+etheta=1, ephi=1
+etheta_table[0]=1
+
+=== IN-RANGE Point 2 ===
+Target: (114.1669487, 22.28209872, 
+=== IN-RANGE Point 2 ===
+Target: (38.44053839)
+theta=1.69028759° (IN RANGE [-60,60]), phi=114.1681406-37.07398987, °
+Distance R=209.0398102m
+minradxtheta=0, minradxphi=0
+etheta=1, ephi=1
+etheta_table[0]=1
+22.28283362, 48.71181414)
+theta=-25.42655945° (IN RANGE [-60,60]), phi=-22.82657433°
+=== IN-RANGE Point 3 ===
+Target: (114.1680711, 
+Distance R=298.36203m
+minradxtheta=0, minradxphi=0
+etheta=1, ephi=1
+etheta_table[0]=1
+22.28221733, 87.4914075)
+theta=-31.53473473° (IN RANGE [-60,60]), phi=-20.04359818°
+Distance R=224.5696869m
+minradxtheta=0, minradxphi=0
+etheta=1, ephi=1
+etheta_table[0]=1
+  VRPF warmup 1: 0.148940171 s, 671410.5357 q/s
+VRPF points=100000 time_s=0.142694 qps=700799.827749 avg_us=1.426941 peak_gb=1.546234 visible=67238 occluded=32762 min_density=0.000170 max_density=0.005815 candidates=82881
+
+CSV written: scaling_memory_benchmark.csv
+
+Final process peak memory: 1.546234 GB
+
+
+root@iZbp1acaw5wdllm90m1hjdZ:~/Radar-Project/build/bin# ./scaling_memory_benchmark   --method vrpf   --sizes 100000   --index ../../test_area.3idx   --dem dem_1m.tif   --min-lon 114.164571 --max-lon 114.169422   --min-lat 22.278365 --max-lat 22.28288   --min-alt 0 --max-alt 100   --seed 20260517   --radar-lon 114.1670   --radar-lat 22.2806   --radar-alt 80   --min-x 835000   --min-y 815500   --index-range-x -1975   --index-range-y 43   --threads 64
+========================================
+  VRPF vs 1 m DSM Scaling Benchmark  100000 points with 64 threads
+========================================
+Method: vrpf
+Threads: 64
+Max target points: 100000
+Lon range: [114.1645710000, 114.1694220000]
+Lat range: [22.2783650000, 22.2828800000]
+Alt range: [0.0000000000, 100.0000000000] m
+Random seed: 20260517
+Loading VRPF RTree: ../../test_area.3idx
+雷达的绝对海拔是: 164.4548712
+雷达的相对海拔是: 80
+VRPF radar RTree xyz: -1724.628608, 290.526573, 164.4593204
+Peak memory after RTree load: 1.525650024 GB
+
+--- target points: 100000 ---
+Random 3D sample points generated: 100000 in 0.001395506 s. Peak memory now: 1.529018402 GB
+
+=== IN-RANGE Point 0 ===
+Target: (114.1657742, 22.2797941, 66.46506586)
+theta=125.466362° (IN RANGE [-60,60]), phi=-32.39229202°
+Distance R=182.9229889m
+minradxtheta=0, minradxphi=0
+etheta=1, ephi=1
+etheta_table[0]=1
+
+=== IN-RANGE Point 1 ===
+Target: (114.1669487, 22.28209872, 38.44053839)
+theta=1.69028759° (IN RANGE [-60,60]), phi=-37.07398987°
+Distance R=209.0398102m
+minradxtheta=0, minradxphi=0
+etheta=1, ephi=1
+etheta_table[0]=1
+
+=== IN-RANGE Point 2 ===
+Target: (114.1680711, 22.28221733, 87.4914075)
+theta=-31.53473473° (IN RANGE [-60,60]), phi=-20.04359818°
+Distance R=224.5696869m
+minradxtheta=0, minradxphi=0
+etheta=1, ephi=1
+etheta_table[0]=1
+
+=== IN-RANGE Point 3 ===
+Target: (114.1662782, 22.28169348, 85.26634577)
+theta=31.46997833° (IN RANGE [-60,60]), phi=-29.02859497°
+Distance R=163.2017059m
+minradxtheta=0, minradxphi=0
+etheta=1, ephi=1
+etheta_table[0]=1
+
+=== IN-RANGE Point 4 ===
+Target: (114.1657786, 22.28251959, 50.5072606)
+theta=30.35478973° (IN RANGE [-60,60]), phi=-24.71785355°
+Distance R=272.514679m
+minradxtheta=0, minradxphi=0
+etheta=1, ephi=1
+etheta_table[0]=1
+  VRPF warmup 1: 0.316037859 s, 316417.7871 q/s
+VRPF points=100000 time_s=0.304093 qps=328846.422305 avg_us=3.040933 peak_gb=1.563644 visible=67238 occluded=32762 min_density=0.000170 max_density=0.005815 candidates=82881
+
+CSV written: scaling_memory_benchmark.csv
+
+Final process peak memory: 1.563644 GB

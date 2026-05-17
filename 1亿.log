@@ -1,0 +1,93 @@
+
+
+1核心测试
+VRPF points=100000000 time_s=182.022790 qps=549381.756232 avg_us=1.820228 peak_gb=4.506226 visible=67301817 occluded=32698183 min_density=0.000167 max_density=0.006055 candidates=82672196
+
+CSV written: scaling_memory_benchmark.csv
+
+Final process peak memory: 4.506226 GB
+
+
+
+2核心测试
+  VRPF warmup 1: 91.82361109 s, 1089044.515 q/s
+VRPF points=100000000 time_s=92.264656 qps=1083838.642938 avg_us=0.922647 peak_gb=4.506786 visible=67301817 occluded=32698183 min_density=0.000167 max_density=0.006055 candidates=82672196
+
+CSV written: scaling_memory_benchmark.csv
+
+Final process peak memory: 4.506786 GB
+
+
+
+
+
+4核心测试
+
+  VRPF warmup 1: 45.90489668 s, 2178416.841 q/s
+VRPF points=100000000 time_s=46.100288 qps=2169183.828977 avg_us=0.461003 peak_gb=4.508137 visible=67301817 occluded=32698183 min_density=0.000167 max_density=0.006055 candidates=82672196
+
+CSV written: scaling_memory_benchmark.csv
+
+Final process peak memory: 4.508137 GB
+
+
+8核心测试
+
+
+  VRPF warmup 1: 23.00464037 s, 4346949.067 q/s
+VRPF points=100000000 time_s=23.014121 qps=4345158.425682 avg_us=0.230141 peak_gb=4.510017 visible=67301817 occluded=32698183 min_density=0.000167 max_density=0.006055 candidates=82672196
+
+CSV written: scaling_memory_benchmark.csv
+
+Final process peak memory: 4.510017 GB
+
+
+
+
+
+
+
+16核心测试
+  VRPF warmup 1: 11.56957588 s, 8643359.186 q/s
+VRPF points=100000000 time_s=11.568962 qps=8643817.676699 avg_us=0.115690 peak_gb=4.514717 visible=67301817 occluded=32698183 min_density=0.000167 max_density=0.006055 candidates=82672196
+
+CSV written: scaling_memory_benchmark.csv
+
+Final process peak memory: 4.514717 GB
+
+
+
+
+
+
+
+
+
+32核心测试
+
+
+
+
+  VRPF warmup 1: 5.914732155 s, 16906936.34 q/s
+VRPF points=100000000 time_s=5.918491 qps=16896198.678707 avg_us=0.059185 peak_gb=4.523544 visible=67301817 occluded=32698183 min_density=0.000167 max_density=0.006055 candidates=82672196
+
+CSV written: scaling_memory_benchmark.csv
+
+Final process peak memory: 4.523544 GB
+
+
+
+
+
+
+
+
+
+
+64核心测试
+  VRPF warmup 1: 3.178206377 s, 31464287.76 q/s
+VRPF points=100000000 time_s=3.170047 qps=31545275.589278 avg_us=0.031700 peak_gb=4.541183 visible=67301817 occluded=32698183 min_density=0.000167 max_density=0.006055 candidates=82672196
+
+CSV written: scaling_memory_benchmark.csv
+
+Final process peak memory: 4.541183 GB

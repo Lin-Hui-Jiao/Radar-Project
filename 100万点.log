@@ -1,0 +1,189 @@
+root@iZbp1acaw5wdllm90m1hjdZ:~/Radar-Project/build/bin# ./scaling_memory_benchmark   --method vrpf   --sizes 1000000   --index ../../test_area.3idx   --dem dem_1m.tif   --min-lon 114.164571 --max-lon 114.169422   --min-lat 22.278365 --max-lat 22.28288   --mi
+n-alt 0 --max-alt 100   --seed 20260517   --radar-lon 114.1670   --radar-lat 22.2806   --radar-alt 80   --min-x 835000   --min-y 815500   --index-range-x -1975   --index-range-y 43   --threads 1
+========================================
+  VRPF vs 1 m DSM Scaling Benchmark  1000000 points with 1 thread
+========================================
+Method: vrpf
+Threads: 1
+Max target points: 1000000
+Lon range: [114.1645710000, 114.1694220000]
+Lat range: [22.2783650000, 22.2828800000]
+Alt range: [0.0000000000, 100.0000000000] m
+Random seed: 20260517
+Loading VRPF RTree: ../../test_area.3idx
+雷达的绝对海拔是: 164.4548712
+雷达的相对海拔是: 80
+VRPF radar RTree xyz: -1724.628608, 290.526573, 164.4593204
+Peak memory after RTree load: 1.526065826 GB
+
+--- target points: 1000000 ---
+Random 3D sample points generated: 1000000 in 0.007334047 s. Peak memory now: 1.555606842 GB
+
+=== IN-RANGE Point 0 ===
+Target: (114.1657742, 22.2797941, 66.46506586)
+theta=125.466362° (IN RANGE [-60,60]), phi=-32.39229202°
+Distance R=182.9229889m
+minradxtheta=0, minradxphi=0
+etheta=1, ephi=1
+etheta_table[0]=1
+
+=== IN-RANGE Point 1 ===
+Target: (114.1669487, 22.28209872, 38.44053839)
+theta=1.69028759° (IN RANGE [-60,60]), phi=-37.07398987°
+Distance R=209.0398102m
+minradxtheta=0, minradxphi=0
+etheta=1, ephi=1
+etheta_table[0]=1
+
+=== IN-RANGE Point 2 ===
+Target: (114.1680711, 22.28221733, 87.4914075)
+theta=-31.53473473° (IN RANGE [-60,60]), phi=-20.04359818°
+Distance R=224.5696869m
+minradxtheta=0, minradxphi=0
+etheta=1, ephi=1
+etheta_table[0]=1
+
+=== IN-RANGE Point 3 ===
+Target: (114.1662782, 22.28169348, 85.26634577)
+theta=31.46997833° (IN RANGE [-60,60]), phi=-29.02859497°
+Distance R=163.2017059m
+minradxtheta=0, minradxphi=0
+etheta=1, ephi=1
+etheta_table[0]=1
+
+=== IN-RANGE Point 4 ===
+Target: (114.1657786, 22.28251959, 50.5072606)
+theta=30.35478973° (IN RANGE [-60,60]), phi=-24.71785355°
+Distance R=272.514679m
+minradxtheta=0, minradxphi=0
+etheta=1, ephi=1
+etheta_table[0]=1
+  VRPF warmup 1: 1.849910152 s, 540566.794 q/s
+VRPF points=1000000 time_s=1.846111 qps=541679.154809 avg_us=1.846111 peak_gb=1.556038 visible=672780 occluded=327220 min_density=0.000168 max_density=0.005904 candidates=826804
+
+CSV written: scaling_memory_benchmark.csv
+
+Final process peak memory: 1.556038 GB
+
+
+
+root@iZbp1acaw5wdllm90m1hjdZ:~/Radar-Project/build/bin# ./scaling_memory_benchmark   --method vrpf   --sizes 1000000   --index ../../test_area.3idx   --dem dem_1m.tif   --min-lon 114.164571 --max-lon 114.169422   --min-lat 22.278365 --max-lat 22.28288   --min-alt 0 --max-alt 100   --seed 20260517   --radar-lon 114.1670   --radar-lat 22.2806   --radar-alt 80   --min-x 835000   --min-y 815500   --index-range-x -1975   --index-range-y 43   --threads 2
+========================================
+  VRPF vs 1 m DSM Scaling Benchmark  1000000 points with 2 threads
+========================================
+Method: vrpf
+Threads: 2
+Max target points: 1000000
+Lon range: [114.1645710000, 114.1694220000]
+Lat range: [22.2783650000, 22.2828800000]
+Alt range: [0.0000000000, 100.0000000000] m
+Random seed: 20260517
+Loading VRPF RTree: ../../test_area.3idx
+雷达的绝对海拔是: 164.4548712
+雷达的相对海拔是: 80
+VRPF radar RTree xyz: -1724.628608, 290.526573, 164.4593204
+Peak memory after RTree load: 1.525749207 GB
+
+--- target points: 1000000 ---
+Random 3D sample points generated: 1000000 in 0.00627347 s. Peak memory now: 1.555290222 GB
+
+=== IN-RANGE Point 0 ===
+Target: (114.1657742, 22.2797941, 66.46506586)
+theta=125.466362° (IN RANGE [-60,60]), phi=-32.39229202°
+Distance R=182.9229889m
+minradxtheta=0, minradxphi=0
+etheta=1, ephi=1
+etheta_table[0]=1
+
+=== IN-RANGE Point 1 ===
+Target: (114.1669487, 22.28209872, 38.44053839)
+theta=1.69028759° (IN RANGE [-60,60]), phi=-37.07398987°
+Distance R=209.0398102m
+minradxtheta=0, minradxphi=0
+etheta=1, ephi=1
+etheta_table[0]=1
+
+=== IN-RANGE Point 2 ===
+Target: (114.1680711, 
+=== IN-RANGE Point 2 ===
+Target: (22.28221733114.1676149, , 22.2792645187.4914075, )
+theta=-31.53473473° (IN RANGE [-60,60]), phi=-20.04359818°
+Distance R=224.5696869m
+minradxtheta=0, minradxphi=0
+47.54474208etheta=1, ephi=1
+etheta_table[0]=1
+)
+theta=-156.6974792° (IN RANGE [-60,60]), phi=-35.87308884°
+Distance R=199.5157166m
+minradxtheta=0, minradxphi=0
+etheta=1, ephi=1
+etheta_table[0]=1
+
+=== IN-RANGE Point 4 ===
+Target: (114.1662782, 22.28169348, 85.26634577)
+theta=31.46997833° (IN RANGE [-60,60]), phi=-29.02859497°
+Distance R=163.2017059m
+minradxtheta=0, minradxphi=0
+etheta=1, ephi=1
+etheta_table[0]=1
+  VRPF warmup 1: 0.931397778 s, 1073655.127 q/s
+VRPF points=1000000 time_s=0.921463 qps=1085230.834850 avg_us=0.921463 peak_gb=1.556236 visible=672780 occluded=327220 min_density=0.000168 max_density=0.005904 candidates=826804
+
+CSV written: scaling_memory_benchmark.csv
+
+Final process peak memory: 1.556236 GB
+root@iZbp1acaw5wdllm90m1hjdZ:~/Radar-Project/build/bin# 
+
+===============================================
+4核心
+
+VRPF points=1000000 time_s=0.476562 qps=2098363.363658 avg_us=0.476562 peak_gb=1.557442 visible=672780 occluded=327220 min_density=0.000168 max_density=0.005904 candidates=826804
+
+CSV written: scaling_memory_benchmark.csv
+
+Final process peak memory: 1.557442 GB
+root@iZbp1acaw5wdllm90m1hjdZ:~/Radar-Project/build/bin# 
+
+
+======================================================
+8核心
+ VRPF warmup 1: 0.268591236 s, 3723129.671 q/s
+VRPF points=1000000 time_s=0.265362 qps=3768438.115088 avg_us=0.265362 peak_gb=1.559868 visible=672780 occluded=327220 min_density=0.000168 max_density=0.005904 candidates=826804
+
+CSV written: scaling_memory_benchmark.csv
+
+Final process peak memory: 1.559868 GB
+======================================================
+
+16核心
+  VRPF warmup 1: 0.179926036 s, 5557839.333 q/s
+VRPF points=1000000 time_s=0.178200 qps=5611664.783523 avg_us=0.178200 peak_gb=1.563988 visible=672780 occluded=327220 min_density=0.000168 max_density=0.005904 candidates=826804
+
+CSV written: scaling_memory_benchmark.csv
+
+Final process peak memory: 1.563988 GB
+
+======================================================
+32核心
+  VRPF warmup 1: 0.178464377 s, 5603359.151 q/s
+VRPF points=1000000 time_s=0.175251 qps=5706101.566930 avg_us=0.175251 peak_gb=1.573208 visible=672780 occluded=327220 min_density=0.000168 max_density=0.005904 candidates=826804
+
+CSV written: scaling_memory_benchmark.csv
+
+Final process peak memory: 1.573208 GB
+
+======================================================
+64核心
+  VRPF warmup 1: 0.178050401 s, 5616711.247 q/s
+VRPF points=1000000 time_s=0.174721 qps=5723520.626263 avg_us=0.174721 peak_gb=1.574726 visible=672780 occluded=327220 min_density=0.000168 max_density=0.005904 candidates=826804
+
+CSV written: scaling_memory_benchmark.csv
+
+Final process peak memory: 1.574726 GB
+======================================================
+  VRPF warmup 1: 0.314108236 s, 3183615.981 q/s
+VRPF points=1000000 time_s=0.305714 qps=3271025.819505 avg_us=0.305714 peak_gb=1.590775 visible=672780 occluded=327220 min_density=0.000168 max_density=0.005904 candidates=826804
+
+CSV written: scaling_memory_benchmark.csv
+
+Final process peak memory: 1.590775 GB
