@@ -1,4 +1,7 @@
 build/
+out/
+__pycache__/
+*.pyc
 *.py
 *.ipynb
 *.3idx
@@ -9,3 +12,11 @@ java/
 *.md
 *.tif
 *.btr
+!bvh_rt_multiobj_experiment.py
+!tools/
+!tools/*.py
+!tools/testdata/
+!tools/testdata/*.obj
+!tools/testdata/*.csv
+!docs/
+!docs/BVH_RT_3D_COMPARISON_TECHNICAL_DESIGN.md
