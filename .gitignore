@@ -20,3 +20,6 @@ java/
 !tools/testdata/*.csv
 !docs/
 !docs/BVH_RT_3D_COMPARISON_TECHNICAL_DESIGN.md
+rise_prototype/
+rise_review/
+
