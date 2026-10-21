@@ -1,0 +1,14 @@
+# Keep source scripts and documentation eligible for tracking.
+!*.py
+!*.md
+
+# Build products and generated output directories.
+/build/
+/data/
+/figures/
+/out/
+
+# Exported fields, metadata, and run logs.
+*.f32
+*.json
+*.log

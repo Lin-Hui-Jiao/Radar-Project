@@ -8,7 +8,6 @@ __pycache__/
 *.tif
 *.Identifier
 data_image/
-java/
 *.md
 *.tif
 *.btr
@@ -22,4 +21,7 @@ java/
 !docs/BVH_RT_3D_COMPARISON_TECHNICAL_DESIGN.md
 rise_prototype/
 rise_review/
+.vscode/
+.idea/
+*.pdf
 
