@@ -1,0 +1,8 @@
+# Vehicle radar sites (EPSG:2326 easting / northing, metres). One field per row, see README.md.
+# Columns: id  E  N  mount_m  note
+#   mount_m: antenna height above the ground found by Getheight3d at (E, N); run.sh refuses a site that fails
+#   `site_check site` (street level, flat 2 m footprint, nothing between ground and antenna, open sky above).
+# Window frame of the 512^3 field: i = E - 834995, j = N - 815495 (the old 500 x 500 frame of results/bench500 had
+# i' = E - 835001, j' = N - 815501).
+V1	835206	815754	3	requested (210, 250) of the 500 x 500 frame = E 835211 N 815751 lies on an elevated deck (15.8 m); nearest passing street node, 5.8 m away; window (211, 259)
+V1h	835206	815754	11	V1 site with the antenna raised by 8 m (author, 2026-10-19): ground 5.681 m + 11 m = 16.681 m, just above the 15.8 m deck east of the site
